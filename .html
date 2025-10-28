@@ -1,0 +1,1564 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Интернет-магазин "Aura"</title>
+    <!-- Подключение Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Подключение шрифта Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* Применяем шрифт Inter ко всему сайту */
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        /* Скрытие полосы прокрутки при открытом модальном окне */
+        .modal-open {
+            overflow: hidden;
+        }
+        /* [НОВОЕ] Стили для активной кнопки категории */
+        .category-btn.active {
+            background-color: #4f46e5; /* indigo-600 */
+            color: #ffffff;
+            font-weight: 600;
+        }
+        /* [НОВОЕ] Стили для галереи быстрого просмотра */
+        .quick-view-gallery-item {
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: border-color 0.2s;
+        }
+        .quick-view-gallery-item:hover,
+        .quick-view-gallery-item.active {
+            border-color: #4f46e5; /* indigo-600 */
+        }
+        /* [НОВОЕ] Стили для скелетной загрузки */
+        @keyframes pulse {
+            50% {
+                opacity: .5;
+            }
+        }
+        .skeleton {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+
+    <!-- [НОВОЕ] Маркетинговый баннер -->
+    <div class="bg-indigo-600 text-white text-center py-2 px-4 text-sm font-medium">
+        Бесплатная доставка при заказе от 5 000 ₽
+    </div>
+
+    <!-- Контейнер всего приложения -->
+    <div id="app" class="min-h-screen flex flex-col">
+
+        <!-- ===== Хедер (Шапка сайта) ===== -->
+        <header class="bg-white shadow-sm sticky top-0 z-40">
+            <nav class="container mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex justify-between items-center h-16">
+                    <!-- Логотип/Название -->
+                    <a href="#" class="text-2xl font-bold text-indigo-600">
+                        Aura
+                    </a>
+                    
+                    <!-- Навигация (для десктопа) -->
+                    <!-- ИЗМЕНЕНО: Возвращаем отображение навигации на десктопе (sm:flex) -->
+                    <div class="hidden sm:flex sm:space-x-8"> 
+                        <a href="#" class="font-medium text-gray-700 hover:text-indigo-500 transition duration-150">Главная</a>
+                        <a href="#products" class="font-medium text-gray-700 hover:text-indigo-500 transition duration-150">Каталог</a>
+                        <a href="#" class="font-medium text-gray-700 hover:text-indigo-500 transition duration-150">О нас</a>
+                        <a href="#" class="font-medium text-gray-700 hover:text-indigo-500 transition duration-150">Контакты</a>
+                    </div>
+
+                    <!-- Иконки (Корзина, Мобильное меню) -->
+                    <div class="flex items-center space-x-2">
+                        <!-- Иконка корзины -->
+                        <button id="openCartBtn" type="button" class="relative p-2 text-gray-600 hover:text-indigo-600 rounded-full hover:bg-gray-100 transition duration-150">
+                            <!-- Иконка SVG -->
+                            <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 10.5V6a3.75 3.75 0 10-7.5 0v4.5m11.356-1.993l1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 01-1.12-1.243l1.264-12A1.125 1.125 0 015.513 7.5h12.974c.576 0 1.059.435 1.119 1.007zM8.625 10.5a.375.375 0 11-.75 0 .375.375 0 01.75 0zm7.5 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
+                            </svg>
+                            <!-- Значок количества товаров -->
+                            <span id="cartBadge" class="absolute -top-1 -right-1 flex justify-center items-center w-5 h-5 bg-indigo-600 text-white text-xs font-bold rounded-full hidden">
+                                0
+                            </span>
+                        </button>
+
+                        <!-- Кнопка мобильного меню (бургер) -->
+                        <!-- ИЗМЕНЕНО: Класс sm:hidden добавлен, кнопка видна только на мобильных -->
+                        <button id="mobileMenuBtn" type="button" class="sm:hidden p-2 text-gray-600 hover:text-indigo-600 rounded-full hover:bg-gray-100 transition duration-150">
+                            <span class="sr-only">Открыть меню</span>
+                            <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Мобильное меню (скрыто по умолчанию) -->
+                <!-- ИЗМЕНЕНО: Класс sm:hidden добавлен, меню отображается только на мобильных -->
+                <div id="mobileMenu" class="hidden sm:hidden pb-4">
+                    <a href="#" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-indigo-600 hover:bg-gray-50">Главная</a>
+                    <a href="#products" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-indigo-600 hover:bg-gray-50">Каталог</a>
+                    <a href="#" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-indigo-600 hover:bg-gray-50">О нас</a>
+                    <a href="#" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-indigo-600 hover:bg-gray-50">Контакты</a>
+                </div>
+            </nav>
+        </header>
+
+        <!-- ===== Основной контент ===== -->
+        <main class="flex-grow">
+            <!-- Герой-секция -->
+            <section class="relative h-[60vh] min-h-[450px] flex items-center justify-center text-center text-white overflow-hidden">
+                <!-- Фоновое изображение -->
+                <div class="absolute inset-0 z-0">
+                    <img src="https://images.unsplash.com/photo-1594035918382-15f583561b6f?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1770&q=80" 
+                         alt="Коллекция духов" 
+                         class="w-full h-full object-cover object-center"
+                         onerror="this.style.display='none'; document.querySelector('.hero-fallback-gradient').classList.remove('hidden');">
+                    <!-- Оверлей-затемнение -->
+                    <div class="absolute inset-0 bg-black bg-opacity-40"></div>
+                    <!-- Оверлей-градиент (для мягкости) -->
+                    <div class="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-30"></div>
+                    <!-- Резервный градиент, если изображение не загрузится -->
+                    <div class="hero-fallback-gradient hidden absolute inset-0 bg-gradient-to-r from-indigo-500 to-purple-600"></div>
+                </div>
+                
+                <!-- Контент -->
+                <div class="relative z-10 container mx-auto px-4 sm:px-6 lg:px-8">
+                    <h1 class="text-4xl sm:text-5xl md:text-6xl font-bold text-white leading-tight shadow-sm">
+                        Найди свой<br class="hidden sm:inline"> <span class="text-indigo-200">идеальный аромат</span>
+                    </h1>
+                    <p class="mt-4 text-lg text-indigo-100 max-w-2xl mx-auto">
+                        Откройте для себя эксклюзивную коллекцию парфюмерии от ведущих мировых брендов.
+                    </p>
+                    <a href="#products" class="mt-8 inline-block bg-indigo-600 text-white font-semibold py-3 px-8 rounded-lg shadow-lg hover:bg-indigo-700 transition duration-300 transform hover:-translate-y-0.5">
+                        Перейти к каталогу
+                    </a>
+                </div>
+            </section>
+
+            <!-- [НОВАЯ] Секция "Почему мы?" -->
+            <section class="bg-white py-16 sm:py-24">
+                <div class="container mx-auto px-4 sm:px-6 lg:px-8 max-w-5xl">
+                    <h2 class="text-3xl font-bold text-center text-gray-900 mb-12">
+                        Почему выбирают Aura?
+                    </h2>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-10 text-center">
+                        <!-- Элемент 1 -->
+                        <div class="flex flex-col items-center">
+                            <div class="flex-shrink-0 mb-4 p-3 bg-indigo-100 rounded-full">
+                                <svg class="w-8 h-8 text-indigo-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 01-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h1.125c.621 0 1.125-.504 1.125-1.125V14.25m-17.25 4.5h12.75m0 0H6.125M6.125 18.75h12.75" />
+                                </svg>
+                            </div>
+                            <h3 class="text-lg font-semibold text-gray-900 mb-2">Быстрая доставка</h3>
+                            <p class="text-gray-500 text-sm">Бесплатная и быстрая доставка по всей России при заказе от 5 000 ₽.</p>
+                        </div>
+                        <!-- Элемент 2 -->
+                        <div class="flex flex-col items-center">
+                            <div class="flex-shrink-0 mb-4 p-3 bg-indigo-100 rounded-full">
+                                <svg class="w-8 h-8 text-indigo-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                            </div>
+                            <h3 class="text-lg font-semibold text-gray-900 mb-2">Гарантия подлинности</h3>
+                            <p class="text-gray-500 text-sm">Мы работаем только с официальными дистрибьюторами. 100% оригинальная продукция.</p>
+                        </div>
+                        <!-- Элемент 3 -->
+                        <div class="flex flex-col items-center">
+                            <div class="flex-shrink-0 mb-4 p-3 bg-indigo-100 rounded-full">
+                                <svg class="w-8 h-8 text-indigo-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M21 11.25v8.25a1.5 1.5 0 01-1.5 1.5H5.25a1.5 1.5 0 01-1.5-1.5v-8.25M12 4.875A2.625 2.625 0 1014.625 7.5H9.375A2.625 2.625 0 1012 4.875zM21 11.25H3v1.5a1.5 1.5 0 001.5 1.5h15a1.5 1.5 0 001.5-1.5v-1.5z" />
+                                </svg>
+                            </div>
+                            <h3 class="text-lg font-semibold text-gray-900 mb-2">Подарочная упаковка</h3>
+                            <p class="text-gray-500 text-sm">Бесплатно упакуем ваш заказ в нашу фирменную подарочную коробку.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- [НОВАЯ] Секция "Горячие предложения" (Скидки) -->
+            <section id="sale-section" class="py-16 sm:py-24 bg-indigo-50">
+                <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+                    <div class="flex justify-between items-center mb-8">
+                        <h2 class="text-3xl font-bold text-gray-900">
+                            Горячие предложения
+                        </h2>
+                        <a href="#products" class="text-sm font-medium text-indigo-600 hover:text-indigo-500 transition">
+                            Смотреть все &rarr;
+                        </a>
+                    </div>
+                    <!-- Горизонтальный скролл-контейнер -->
+                    <div class="flex overflow-x-auto space-x-6 pb-4">
+                        <!-- Карточки товаров со скидкой будут вставлены сюда JS -->
+                        <!-- Карточкам будет задана фиксированная ширина, например w-72 или w-80 -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- Секция продуктов -->
+            <section id="products" class="py-16 sm:py-24">
+                <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+                    <!-- Заголовок -->
+                    <div class="text-center mb-12">
+                        <h2 class="text-3xl font-bold text-gray-900">
+                            Бестселлеры
+                        </h2>
+                        <p class="mt-2 text-lg text-gray-500">Ароматы, которые покорили сердца наших клиентов</p>
+                    </div>
+
+                    <!-- [НОВОЕ] Фильтры по категориям -->
+                    <div id="categoryFilters" class="flex flex-wrap justify-center gap-2 mb-10">
+                        <button class="category-btn active px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-full hover:bg-gray-100 transition" data-category="all">
+                            Все
+                        </button>
+                        <button class="category-btn px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-full hover:bg-gray-100 transition" data-category="female">
+                            Для Нее
+                        </button>
+                        <button class="category-btn px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-full hover:bg-gray-100 transition" data-category="male">
+                            Для Него
+                        </button>
+                        <button class="category-btn px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-full hover:bg-gray-100 transition" data-category="unisex">
+                            Унисекс
+                        </button>
+                    </div>
+
+                    <!-- Панель поиска и сортировки -->
+                    <div class="flex flex-col md:flex-row justify-between items-center gap-4 mb-8">
+                        <!-- Поиск -->
+                        <div class="relative w-full md:w-1/2 lg:w-1/3">
+                            <input type="text" id="searchInput" placeholder="Поиск по названию или бренду..." 
+                                   class="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                            <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                                <svg class="w-5 h-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+                                </svg>
+                            </div>
+                        </div>
+                        <!-- Сортировка -->
+                        <div class="flex items-center w-full md:w-auto">
+                            <label for="sortSelect" class="mr-2 text-sm font-medium text-gray-700">Сортировка:</label>
+                            <select id="sortSelect" name="sort"
+                                    class="w-full md:w-auto pl-3 pr-8 py-2 border border-gray-300 rounded-md shadow-sm bg-white text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                                <option value="default">По умолчанию</option>
+                                <option value="price_asc">Цена: по возрастанию</option>
+                                <option value="price_desc">Цена: по убыванию</option>
+                                <option value="name_asc">Название: А-Я</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Сетка продуктов -->
+                    <div id="productGrid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
+                        <!-- [НОВОЕ] Скелетные карточки для загрузки -->
+                        <div class="skeleton bg-white rounded-lg shadow-md overflow-hidden border border-gray-100">
+                            <div class="w-full h-64 bg-gray-200"></div>
+                            <div class="p-5">
+                                <div class="h-6 w-3/4 bg-gray-200 rounded"></div>
+                                <div class="h-4 w-1/2 bg-gray-200 rounded mt-2"></div>
+                                <div class="h-6 w-1/3 bg-gray-200 rounded mt-4"></div>
+                            </div>
+                        </div>
+                        <div class="skeleton bg-white rounded-lg shadow-md overflow-hidden border border-gray-100">
+                            <div class="w-full h-64 bg-gray-200"></div>
+                            <div class="p-5">
+                                <div class="h-6 w-3/4 bg-gray-200 rounded"></div>
+                                <div class="h-4 w-1/2 bg-gray-200 rounded mt-2"></div>
+                                <div class="h-6 w-1/3 bg-gray-200 rounded mt-4"></div>
+                            </div>
+                        </div>
+                        <div class="skeleton hidden sm:block bg-white rounded-lg shadow-md overflow-hidden border border-gray-100">
+                            <div class="w-full h-64 bg-gray-200"></div>
+                            <div class="p-5">
+                                <div class="h-6 w-3/4 bg-gray-200 rounded"></div>
+                                <div class="h-4 w-1/2 bg-gray-200 rounded mt-2"></div>
+                                <div class="h-6 w-1/3 bg-gray-200 rounded mt-4"></div>
+                            </div>
+                        </div>
+                        <div class="skeleton hidden lg:block bg-white rounded-lg shadow-md overflow-hidden border border-gray-100">
+                            <div class="w-full h-64 bg-gray-200"></div>
+                            <div class="p-5">
+                                <div class="h-6 w-3/4 bg-gray-200 rounded"></div>
+                                <div class="h-4 w-1/2 bg-gray-200 rounded mt-2"></div>
+                                <div class="h-6 w-1/3 bg-gray-200 rounded mt-4"></div>
+                            </div>
+                        </div>
+                        <!-- Карточки продуктов будут вставлены сюда с помощью JavaScript -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- [НОВАЯ] Секция Отзывов -->
+            <section class="bg-indigo-50 py-16 sm:py-24">
+                <div class="container mx-auto px-4 sm:px-6 lg:px-8 max-w-5xl">
+                    <h2 class="text-3xl font-bold text-center text-gray-900 mb-12">
+                        Что говорят наши клиенты
+                    </h2>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                        <!-- Отзыв 1 -->
+                        <div class="bg-white p-6 rounded-lg shadow-lg">
+                            <div class="flex items-center mb-3">
+                                <!-- Звезды -->
+                                <svg class="w-5 h-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path></svg>
+                                <svg class="w-5 h-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path></svg>
+                                <svg class="w-5 h-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path></svg>
+                                <svg class="w-5 h-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path></svg>
+                                <svg class="w-5 h-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path></svg>
+                            </div>
+                            <p class="text-gray-600 mb-4 italic">"Потрясающий сервис! Помогли подобрать аромат, и он превзошел все ожидания. Теперь это мой любимый магазин."</p>
+                            <div class="font-semibold text-gray-900">Елена В.</div>
+                        </div>
+                        <!-- Отзыв 2 -->
+                        <div class="bg-white p-6 rounded-lg shadow-lg">
+                            <div class="flex items-center mb-3">
+                                <!-- Звезды -->
+                                <svg class="w-5 h-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path></svg>
+                                <svg class="w-5 h-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path></svg>
+                                <svg class="w-5 h-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path></svg>
+                                <svg class="w-5 h-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path></svg>
+                                <svg class="w-5 h-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path></svg>
+                            </div>
+                            <p class="text-gray-600 mb-4 italic">"Только оригиналы! Очень быстрая доставка и прекрасная подарочная упаковка. Заказывал Velvet Oud, аромат просто божественный."</p>
+                            <div class="font-semibold text-gray-900">Михаил П.</div>
+                        </div>
+                        <!-- Отзыв 3 -->
+                        <div class="bg-white p-6 rounded-lg shadow-lg">
+                            <div class="flex items-center mb-3">
+                                <!-- Звезды -->
+                                <svg class="w-5 h-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path></svg>
+                                <svg class="w-5 h-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path></svg>
+                                <svg class="w-5 h-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path></svg>
+                                <svg class="w-5 h-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path></svg>
+                                <svg class="w-5 h-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path></svg>
+                            </div>
+                            <p class="text-gray-600 mb-4 italic">"Функция 'Узнать об аромате' — это просто магия! ИИ так красиво описал Solaris Bloom, что я не смогла устоять."</p>
+                            <div class="font-semibold text-gray-900">Анна К.</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- [НОВАЯ] Секция Подписки на рассылку -->
+            <section class="bg-white py-16 sm:py-24">
+                <div class="container mx-auto px-4 sm:px-6 lg:px-8 max-w-2xl text-center">
+                    <h2 class="text-3xl font-bold text-gray-900">
+                        Узнайте о новинках первыми
+                    </h2>
+                    <p class="mt-3 text-lg text-gray-500">
+                        Подпишитесь на нашу рассылку, чтобы получать эксклюзивные предложения и узнавать о новых поступлениях.
+                    </p>
+                    <form class="mt-8 flex flex-col sm:flex-row justify-center max-w-lg mx-auto">
+                        <label for="email-address" class="sr-only">Email адрес</label>
+                        <input id="email-address" name="email" type="email" autocomplete="email" required
+                            class="w-full px-5 py-3 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 sm:max-w-xs sm:flex-1"
+                            placeholder="Введите ваш Email">
+                        <button type="submit"
+                            class="mt-3 sm:mt-0 sm:ml-3 w-full sm:w-auto flex-shrink-0 px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-300">
+                            Подписаться
+                        </button>
+                    </form>
+                </div>
+            </section>
+
+        </main>
+
+        <!-- ===== Футер (Подвал) ===== -->
+        <footer class="bg-white border-t border-gray-200 pt-16 pb-8">
+            <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
+                    <!-- Блок 1: О бренде -->
+                    <div>
+                        <a href="#" class="text-2xl font-bold text-indigo-600">
+                            Aura
+                        </a>
+                        <p class="mt-2 text-gray-500 text-sm">
+                            Откройте мир эксклюзивной парфюмерии.
+                        </p>
+                    </div>
+                    <!-- Блок 2: Магазин -->
+                    <div>
+                        <h4 class="font-semibold text-gray-900 mb-3">Магазин</h4>
+                        <ul class="space-y-2">
+                            <li><a href="#" class="text-gray-600 hover:text-indigo-500 transition">Новинки</a></li>
+                            <li><a href="#" class="text-gray-600 hover:text-indigo-500 transition">Для Нее</a></li>
+                            <li><a href="#" class="text-gray-600 hover:text-indigo-500 transition">Для Него</a></li>
+                            <li><a href="#" class="text-gray-600 hover:text-indigo-500 transition">Бренды</a></li>
+                        </ul>
+                    </div>
+                    <!-- Блок 3: Компания -->
+                    <div>
+                        <h4 class="font-semibold text-gray-900 mb-3">Компания</h4>
+                        <ul class="space-y-2">
+                            <li><a href="#" class="text-gray-600 hover:text-indigo-500 transition">О нас</a></li>
+                            <li><a href="#" class="text-gray-600 hover:text-indigo-500 transition">Доставка и оплата</a></li>
+                            <li><a href="#" class="text-gray-600 hover:text-indigo-500 transition">Контакты</a></li>
+                        </ul>
+                    </div>
+                    <!-- Блок 4: Соцсети -->
+                    <div>
+                        <h4 class="font-semibold text-gray-900 mb-3">Мы в соцсетях</h4>
+                        <div class="flex space-x-4">
+                            <!-- ИЗМЕНЕНО: Добавлены target="_blank" и реальные, но шаблонные href -->
+                            <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" class="text-gray-500 hover:text-indigo-500 transition" aria-label="Instagram">
+                                <span class="sr-only">Instagram</span>
+                                <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path fill-rule="evenodd" d="M12.315 2c-4.03.068-4.51.2-6.1.87a7.51 7.51 0 00-2.6 1.45 7.51 7.51 0 00-1.45 2.6c-.67 1.59-.8 2.07-.87 6.1s.2 4.51.87 6.1a7.51 7.51 0 001.45 2.6 7.51 7.51 0 002.6 1.45c1.59.67 2.07.8 6.1.87s4.51-.2 6.1-.87a7.51 7.51 0 002.6-1.45 7.51 7.51 0 001.45-2.6c.67-1.59.8-2.07.87-6.1s-.2-4.51-.87-6.1a7.51 7.51 0 00-1.45-2.6 7.51 7.51 0 00-2.6-1.45c-1.59-.67-2.07-.8-6.1-.87zM12 4.14A7.86 7.86 0 114.14 12 7.86 7.86 0 0112 4.14zM12 16a4 4 0 110-8 4 4 0 010 8zm6.4-8.8a1.2 1.2 0 11-2.4 0 1.2 1.2 0 012.4 0z" clip-rule="evenodd" /></svg>
+                            </a>
+                            <!-- ИЗМЕНЕНО: Добавлены target="_blank" и реальные, но шаблонные href -->
+                            <a href="https://facebook.com" target="_blank" rel="noopener noreferrer" class="text-gray-500 hover:text-indigo-500 transition" aria-label="Facebook">
+                                <span class="sr-only">Facebook</span>
+                                <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path fill-rule="evenodd" d="M22 12c0-5.523-4.477-10-10-10S2 6.477 2 12c0 4.991 3.657 9.128 8.438 9.878v-6.987h-2.54V12h2.54V9.797c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.772-1.63 1.562V12h2.773l-.443 2.89h-2.33v6.988C18.343 21.128 22 16.991 22 12z" clip-rule="evenodd" /></svg>
+                            </a>
+                            <!-- ИЗМЕНЕНО: Добавлены target="_blank" и реальные, но шаблонные href -->
+                            <a href="https://telegram.org" target="_blank" rel="noopener noreferrer" class="text-gray-500 hover:text-indigo-500 transition" aria-label="Telegram">
+                                <span class="sr-only">Telegram</span>
+                                <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path d="M11.944 0C5.356 0 0 5.356 0 11.944s5.356 11.944 11.944 11.944 11.944-5.356 11.944-11.944S18.53 0 11.944 0zM17.47 7.832c-.14.612-.54 2.23-1.012 4.15l-1.58 5.52c-.19.678-.54 1.032-.81 1.062-.5.053-1.022-.32-1.54-.64l-2.48-1.82c-.59-.43-1.02-.7-1.58-.7-.61 0-.91.24-.91.75 0 .32.2.48.58.87l.03.028c.61.58 1.18 1.13 1.7 1.63.53.5 1.1 1.04 1.78 1.04.5 0 .91-.14 1.25-.4l1.3-1.21c.42-.39.78-.73 1.3-1.28.6-.63 1.08-1.12 1.42-1.4.3-.23.6-.45.85-.66s.48-.4.65-.55c.18-.16.32-.28.4-.38.13-.13.18-.2.2-.24.03-.06.03-.1.03-.1s0-.08-.02-.12a.1.1 0 00-.03-.08.1.1 0 00-.05-.06.13.13 0 00-.07-.03.2.2 0 00-.1-.01c-.08 0-.17.02-.27.05s-.2.07-.3.1c-.1.03-.2.07-.28.1a1.2 1.2 0 01-.26.11c-.08.03-.14.05-.18.06-.03.01-.06.02-.07.02a.6.6 0 01-.1.02.5.5 0 01-.09.01c-.03 0-.06 0-.07-.01l-.1-.01c-.03 0-.06-.01-.08-.01s-.06-.02-.08-.02c-.03 0-.05-.01-.07-.02s-.04-.01-.06-.02a.8.8 0 01-.06-.02c-.02 0-.04-.01-.05-.02-.02 0-.03-.01-.04-.01s-.03-.01-.04-.02l-.04-.02c-.02-.01-.03-.01-.04-.02s-.03-.01-.04-.02l-.04-.02c-.02-.01-.03-.01-.04-.02l-.02-.01-.04-.02-.02-.01-.03-.02-.01-.01-.03-.01c-.02-.01-.03-.01-.04-.02l-.03-.02c-.02-.01-.03-.01-.04-.02l-.03-.02c-.02-.01-.03-.01-.04-.02l-.03-.02a.9.9 0 01-.04-.02c-.02-.01-.03-.01-.04-.02l-.02-.01c-.03-.02-.05-.02-.07-.03l-3.3-2.06c-.6-.37-.88-.58-.88-.98 0-.3.14-.56.41-.78.27-.22.6-.33 1.01-.33h5.58c.7 0 1.18-.18 1.42-.55.24-.37.36-.88.36-1.54 0-.4-.01-.7-.03-1s-.03-.5-.03-.6c0-.1-.01-.19-.01-.25 0-.06 0-.11-.01-.15a.3.3 0 00-.01-.08.1.1 0 00-.01-.06.07.07 0 00-.02-.05.1.1 0 00-.03-.04.1.1 0 00-.05-.03.17.17 0 00-.08-.01.3.3 0 00-.1.01.2.2 0 00-.1.02c-.03.01-.06.02-.1.03-.05.02-.1.05-.17.08-.07.03-.13.06-.18.08s-.09.04-.13.05c-.03.01-.06.02-.08.02l-.1.02c-.03.01-.06.01-.08.01l-.1.01c-.04 0-.07.01-.1.01s-.06 0-.1.01l-.08.01c-.03 0-.07.01-.1.01l-.09.01c-.03 0-.06.01-.08.01l-.1.01c-.02 0-.05.01-.07.01l-.08.01c-.03 0-.06.01-.08.01l-.1.01c-.02 0-.05.01-.07.01-.02 0-.05.01-.07.01s-.05.01-.07.01z" /></svg>
+                            </a>
+                            <!-- [НОВОЕ] Иконка VK -->
+                            <a href="https://vk.com" target="_blank" rel="noopener noreferrer" class="text-gray-500 hover:text-indigo-500 transition" aria-label="VK">
+                                <span class="sr-only">VK</span>
+                                <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path fill-rule="evenodd" d="M12.04 2.02c-5.52 0-10 4.48-10 10s4.48 10 10 10 10-4.48 10-10-4.48-10-10-10zm4.27 13.03c.12-.11.2-.26.23-.42.03-.16.02-.32-.02-.48l-.4-1.63c-.1-.41-.42-.62-.95-.62h-.85c-.53 0-.9.12-1.11.35-.21.23-.32.55-.32.96v1.39c0 .41-.12.72-.35.93s-.56.32-.98.32c-.5 0-1.2-.31-2.11-.93-.91-.62-1.62-1.4-2.14-2.34-.51-.94-.77-1.96-.77-3.07 0-.5.12-.9.35-1.2.23-.3.56-.46.98-.46h1.7c.41 0 .73.1.95.31.22.21.33.49.33.86 0 .3-.07.6-.2.9-.13.3-.3.6-.5.9-.2.3-.33.5-.39.6-.06.1-.1.1-.1.1s0 0 0 0c.03.06.1.1.18.1.09.02.2.03.3.03h.15c.2 0 .4-.03.6-.1.2-.07.4-.17.6-.3.2-.13.4-.29.6-.49.2-.2.4-.4.6-.6l.4-.5c.2-.2.4-.4.6-.6.2-.2.4-.3.6-.3h2.1c.4 0 .7.1.9.3.2.2.3.5.3.9 0 .2-.03.4-.1.6l-1.1 2.2c-.1.2-.2.4-.3.6s-.2.4-.3.6c-.1.2-.1.3 0 .3s.1.1.1.1c.3.2.6.4.9.6s.5.4.7.6c.2.2.3.4.4.6.1.2.2.4.3.6l.4 1.1c.1.3.1.6.1.9 0 .5-.2.9-.5 1.2-.3.3-.7.5-1.2.5h-2.5c-.6 0-1.1-.2-1.5-.6z" clip-rule="evenodd"></path></svg>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                <div class="border-t border-gray-100 pt-8 text-center text-sm text-gray-500">
+                    <p>&copy; 2025 "Aura". Все права защищены.</p>
+                </div>
+            </div>
+        </footer>
+
+    </div>
+
+    <!-- ===== Модальное окно Корзины ===== -->
+    <div id="cartModal" class="fixed inset-0 z-50 hidden" aria-labelledby="cart-title" role="dialog" aria-modal="true">
+        <!-- Оверлей (фон) -->
+        <div id="cartOverlay" class="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm transition-opacity duration-300 ease-out"></div>
+
+        <!-- Контент модального окна -->
+        <div class="fixed inset-y-0 right-0 flex max-w-full pl-10">
+            <div id="cartPanel" class="w-screen max-w-md transform transition ease-in-out duration-300 translate-x-full">
+                <div class="flex h-full flex-col overflow-y-scroll bg-white shadow-xl">
+                    <div class="flex-1 overflow-y-auto px-4 py-6 sm:px-6">
+                        <!-- Заголовок -->
+                        <div class="flex items-start justify-between">
+                            <h2 class="text-lg font-medium text-gray-900" id="cart-title">
+                                Ваша корзина
+                            </h2>
+                            <div class="ml-3 flex h-7 items-center">
+                                <button id="closeCartBtn" type="button" class="-m-2 p-2 text-gray-400 hover:text-gray-500">
+                                    <span class="sr-only">Закрыть панель</span>
+                                    <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Список товаров в корзине -->
+                        <div class="mt-8">
+                            <div class="flow-root">
+                                <ul id="cartItemsList" role="list" class="-my-6 divide-y divide-gray-200">
+                                    <!-- Товары будут вставлены сюда -->
+                                    <!-- 
+                                    Пример товара в корзине:
+                                    <li class="flex py-6">
+                                        <div class="h-24 w-24 flex-shrink-0 overflow-hidden rounded-md border border-gray-200">
+                                            <img src="https://placehold.co/100x100/f0e6ff/7c3aed?text=Фото" alt="Аромат" class="h-full w-full object-cover object-center">
+                                        </div>
+                                        <div class="ml-4 flex flex-1 flex-col">
+                                            <div>
+                                                <div class="flex justify-between text-base font-medium text-gray-900">
+                                                    <h3>Название</h3>
+                                                    <p class="ml-4">5 000 ₽</p>
+                                                </div>
+                                                <p class="mt-1 text-sm text-gray-500">Бренд</p>
+                                            </div>
+                                            <div class="flex flex-1 items-end justify-between text-sm">
+                                                <p class="text-gray-500">Кол-во: 1</p>
+                                                <div class="flex">
+                                                    <button type="button" class="font-medium text-purple-600 hover:text-purple-500">Удалить</button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </li> 
+                                    -->
+                                </ul>
+                                <p id="emptyCartMessage" class="text-center text-gray-500 mt-6 hidden">Ваша корзина пуста.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Итог -->
+                    <div class="border-t border-gray-200 px-4 py-6 sm:px-6">
+                        <div class="flex justify-between text-base font-medium text-gray-900">
+                            <p>Итого</p>
+                            <p id="cartTotal">0 ₽</p>
+                        </div>
+                        <p class="mt-0.5 text-sm text-gray-500">Доставка и налоги рассчитываются при оформлении заказа.</p>
+                        <div class="mt-6">
+                            <a href="#" class="flex items-center justify-center rounded-md border border-transparent bg-indigo-600 px-6 py-3 text-base font-medium text-white shadow-sm hover:bg-indigo-700 transition duration-300">
+                                Оформить заказ
+                            </a>
+                        </div>
+                        <div class="mt-6 flex justify-center text-center text-sm text-gray-500">
+                            <p>
+                                или
+                                <button id="continueShoppingBtn" type="button" class="font-medium text-indigo-600 hover:text-indigo-500">
+                                    Продолжить покупки
+                                    <span aria-hidden="true"> &rarr;</span>
+                                </button>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== [НОВОЕ] Модальное окно "AI Описание" (ВОССТАНОВЛЕНО) ===== -->
+    <div id="aiModal" class="fixed inset-0 z-50 hidden" aria-labelledby="ai-modal-title" role="dialog" aria-modal="true">
+        <!-- Оверлей (фон) -->
+        <div id="aiOverlay" class="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm transition-opacity duration-300 ease-out opacity-0"></div>
+
+        <!-- Контент модального окна -->
+        <div class="fixed inset-0 z-10 w-screen overflow-y-auto p-4 sm:p-6 md:p-10">
+            <div id="aiPanel" class="mx-auto max-w-xl w-full transform transition ease-in-out duration-300 translate-y-full scale-95 opacity-0">
+                <div class="relative flex flex-col h-full max-h-[70vh] overflow-hidden bg-white shadow-2xl rounded-lg">
+                    
+                    <!-- Заголовок -->
+                    <div class="border-b border-gray-200 px-6 py-4">
+                        <div class="flex items-center justify-between">
+                            <h2 id="aiModalTitle" class="text-lg font-medium text-gray-900" id="ai-modal-title">
+                                ✨ Об аромате...
+                            </h2>
+                            <button id="closeAiBtn" type="button" class="-m-2 p-2 text-gray-400 hover:text-gray-500">
+                                <span class="sr-only">Закрыть панель</span>
+                                <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Контент (Описание) -->
+                    <div class="flex-1 overflow-y-auto p-6">
+                        <!-- Загрузчик -->
+                        <div id="aiLoading" class="flex flex-col items-center justify-center h-48">
+                            <svg class="animate-spin h-8 w-8 text-indigo-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            <p class="mt-3 text-sm text-gray-500">Магия Gemini создает описание...</p>
+                        </div>
+                        <!-- Контент -->
+                        <div id="aiDescriptionContent" class="prose prose-sm text-gray-600 max-w-none">
+                            <!-- Описание от AI появится здесь -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== [НОВОЕ] Модальное окно "Быстрого просмотра" ===== -->
+    <div id="quickViewModal" class="fixed inset-0 z-50 hidden" aria-labelledby="quick-view-title" role="dialog" aria-modal="true">
+        <!-- Оверлей (фон) -->
+        <div id="quickViewOverlay" class="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm transition-opacity duration-300 ease-out opacity-0"></div>
+
+        <!-- Контент модального окна -->
+        <div class="fixed inset-0 z-10 w-screen overflow-y-auto p-4 sm:p-6 md:p-10">
+            <div id="quickViewPanel" class="mx-auto max-w-4xl w-full transform transition ease-in-out duration-300 translate-y-full scale-95 opacity-0">
+                <div class="relative flex flex-col md:flex-row h-full max-h-[90vh] overflow-hidden bg-white shadow-2xl rounded-lg">
+                    
+                    <!-- Кнопка закрытия -->
+                    <button id="closeQuickViewBtn" type="button" class="absolute top-4 right-4 z-20 -m-2 p-2 text-gray-400 hover:text-gray-500 bg-white rounded-full">
+                        <span class="sr-only">Закрыть панель</span>
+                        <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+
+                    <!-- Левая часть: Галерея -->
+                    <div class="w-full md:w-1/2 h-64 md:h-auto bg-gray-100 flex flex-col">
+                        <!-- Главное изображение -->
+                        <div class="flex-grow flex items-center justify-center overflow-hidden p-4">
+                            <img id="quickViewImage" src="https://placehold.co/600x600/f0f4f8/7c3aed?text=Aura" alt="Продукт" class="h-full w-full max-h-[400px] object-contain object-center">
+                        </div>
+                        <!-- Миниатюры галереи -->
+                        <div id="quickViewGallery" class="flex justify-center space-x-2 p-4 bg-gray-50 border-t border-gray-200">
+                            <!-- Миниатюры будут вставлены JS -->
+                        </div>
+                    </div>
+
+                    <!-- Правая часть: Описание -->
+                    <div class="w-full md:w-1/2 flex flex-col">
+                        <div class="flex-1 overflow-y-auto p-6 sm:p-8">
+                            <!-- Заголовок -->
+                            <h2 id="quickViewName" class="text-2xl font-bold text-gray-900" id="quick-view-title">
+                                Название продукта
+                            </h2>
+                            <p id="quickViewBrand" class="text-base text-gray-500 mb-3">Бренд</p>
+
+                            <!-- Цена и Размер -->
+                            <div class="flex justify-between items-center mb-4">
+                                <p id="quickViewPrice" class="text-3xl font-bold text-indigo-600">
+                                    0 ₽
+                                </p>
+                                <span id="quickViewSize" class="text-sm font-medium text-gray-700 bg-gray-100 px-3 py-1 rounded-full">
+                                    0 мл
+                                </span>
+                            </div>
+
+                            <!-- Описание -->
+                            <div class="mb-6">
+                                <h3 class="font-semibold text-gray-900 mb-2">Об аромате</h3>
+                                <div id="quickViewDescription" class="prose prose-sm text-gray-600 max-w-none">
+                                    <p>Полное описание...</p>
+                                </div>
+                            </div>
+
+                            <!-- Ноты аромата -->
+                            <div id="quickViewNotesContainer" class="mb-6">
+                                <h3 class="font-semibold text-gray-900 mb-2">Пирамида аромата</h3>
+                                <dl class="space-y-2">
+                                    <div class="flex">
+                                        <dt class="w-1/3 text-sm font-medium text-gray-500">Верхние ноты:</dt>
+                                        <dd id="quickViewNotesTop" class="w-2/3 text-sm text-gray-700"></dd>
+                                    </div>
+                                    <div class="flex">
+                                        <dt class="w-1/3 text-sm font-medium text-gray-500">Ноты сердца:</dt>
+                                        <dd id="quickViewNotesHeart" class="w-2/3 text-sm text-gray-700"></dd>
+                                    </div>
+                                    <div class="flex">
+                                        <dt class="w-1/3 text-sm font-medium text-gray-500">Базовые ноты:</dt>
+                                        <dd id="quickViewNotesBase" class="w-2/3 text-sm text-gray-700"></dd>
+                                    </div>
+                                </dl>
+                            </div>
+                        </div>
+                        
+                        <!-- Футер: Кнопка "В корзину" -->
+                        <div class="border-t border-gray-200 p-6 bg-gray-50">
+                            <button id="quickViewAddToCartBtn" type="button" data-id="0"
+                                class="add-to-cart-btn w-full flex items-center justify-center rounded-md border border-transparent bg-indigo-600 px-6 py-3 text-base font-medium text-white shadow-sm hover:bg-indigo-700 transition duration-300">
+                                Добавить в корзину
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- ===== JavaScript ===== -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+
+            // ===== API-ключ Gemini (оставьте пустым) =====
+            const apiKey = ""; // API-ключ будет предоставлен средой выполнения
+
+            // ===== База данных продуктов (замените на свои) =====
+            // [ИЗМЕНЕНО] Добавлены категории и информация о скидках
+            const products = [
+                {
+                    id: 1,
+                    name: 'Mystic Elixir',
+                    brand: 'Chanel',
+                    price: 12500,
+                    imageUrl: 'https://images.unsplash.com/photo-1541643600914-78b084683601?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=800&q=80',
+                    gallery: [ // [НОВОЕ]
+                        'https://images.unsplash.com/photo-1541643600914-78b084683601?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=800&q=80',
+                        'https://images.unsplash.com/photo-1587795328151-8b049301e5d7?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=800&q=80',
+                        'https://images.unsplash.com/photo-1620005530261-0f738d2df794?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=800&q=80'
+                    ],
+                    category: 'female',
+                    isSale: false,
+                    size: '75 мл', // [НОВОЕ]
+                    description: 'Загадочный и чарующий аромат, сочетающий в себе ноты редких цветов и глубокие древесные аккорды. Идеален для вечернего выхода.', // [НОВОЕ]
+                    notes: { // [НОВОЕ]
+                        top: 'Иланг-иланг, Жасмин',
+                        heart: 'Майская роза, Ирис',
+                        base: 'Сандал, Ветивер'
+                    }
+                },
+                {
+                    id: 2,
+                    name: 'Velvet Oud',
+                    brand: 'Dior',
+                    price: 15200,
+                    imageUrl: 'https://images.unsplash.com/photo-1620005753402-47d63b20c2b2?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=800&q=80',
+                    gallery: [
+                        'https://images.unsplash.com/photo-1620005753402-47d63b20c2b2?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=800&q=80',
+                        'https://images.unsplash.com/photo-1598436034111-96e5d8f7b0a8?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=800&q=80',
+                    ],
+                    category: 'unisex',
+                    isSale: false,
+                    size: '100 мл',
+                    description: 'Роскошный и обволакивающий аромат, построенный вокруг драгоценной ноты уда. Теплый, пряный и незабываемый.',
+                    notes: {
+                        top: 'Кардамон, Шафран',
+                        heart: 'Уд, Роза',
+                        base: 'Амбра, Мускус'
+                    }
+                },
+                {
+                    id: 3,
+                    name: 'Aqua Celestial',
+                    brand: 'Gucci',
+                    price: 9800,
+                    originalPrice: 11500,
+                    imageUrl: 'https://images.unsplash.com/photo-1619994042250-7c9197a13c38?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=800&q=80',
+                    gallery: [
+                        'https://images.unsplash.com/photo-1619994042250-7c9197a13c38?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=800&q=80',
+                        'https://images.unsplash.com/photo-1523293182-7E5C11E0E676?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=800&q=80'
+                    ],
+                    category: 'male',
+                    isSale: true,
+                    size: '100 мл',
+                    description: 'Свежий и энергичный аромат, напоминающий о морском бризе. Идеально подходит для активного мужчины, ценящего свободу.',
+                    notes: {
+                        top: 'Бергамот, Лимон',
+                        heart: 'Морские ноты, Лаванда',
+                        base: 'Кедр, Амброксан'
+                    }
+                },
+                {
+                    id: 4,
+                    name: 'Crimson Night',
+                    brand: 'Tom Ford',
+                    price: 21000,
+                    imageUrl: 'https://images.unsplash.com/photo-1542051036-d4e5f05f4252?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=800&q=80',
+                    gallery: [
+                        'https://images.unsplash.com/photo-1542051036-d4e5f05f4252?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=800&q=80',
+                        'https://images.unsplash.com/photo-1594035918382-15f583561b6f?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=800&q=80',
+                        'https://images.unsplash.com/photo-1617124707684-6b22b40e7a17?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=800&q=80'
+                    ],
+                    category: 'unisex',
+                    isSale: false,
+                    size: '50 мл',
+                    description: 'Смелый, провокационный и пьянящий. Этот аромат создан для тех, кто не боится быть в центре внимания. Глубокие ноты вишни и табака.',
+                    notes: {
+                        top: 'Вишня, Горький миндаль',
+                        heart: 'Роза, Жасмин, Слива',
+                        base: 'Бобы тонка, Табак, Ветивер'
+                    }
+                },
+                {
+                    id: 5,
+                    name: 'Solaris Bloom',
+                    brand: 'Jo Malone',
+                    price: 11300,
+                    originalPrice: 13000,
+                    imageUrl: 'https://images.unsplash.com/photo-1608200660339-b2d9180b1e1d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=800&q=80',
+                    gallery: [
+                        'https://images.unsplash.com/photo-1608200660339-b2d9180b1e1d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=800&q=80',
+                        'https://images.unsplash.com/photo-1619994042250-7c9197a13c38?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=800&q=80'
+                    ],
+                    category: 'female',
+                    isSale: true,
+                    size: '100 мл',
+                    description: 'Яркий и солнечный цветочный аромат. Переносит вас в цветущий сад, наполненный ароматами жасмина и туберозы.',
+                    notes: {
+                        top: 'Мандарин',
+                        heart: 'Жасмин, Тубероза',
+                        base: 'Сандал'
+                    }
+                },
+                {
+                    id: 6,
+                    name: 'Urban Nomad',
+                    brand: 'Le Labo',
+                    price: 19500,
+                    imageUrl: 'https://images.unsplash.com/photo-1610461888750-10f30853f86b?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=800&q=80',
+                    gallery: [
+                        'https://images.unsplash.com/photo-1610461888750-10f30853f86b?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=800&q=80'
+                    ],
+                    category: 'male',
+                    isSale: false,
+                    size: '100 мл',
+                    description: 'Современный древесный аромат для городского жителя. Ноты кедра, сандала и легкий оттенок кожи создают образ уверенности.',
+                    notes: {
+                        top: 'Кардамон, Фиалка',
+                        heart: 'Ирис, Папирус',
+                        base: 'Кедр, Сандал, Кожа'
+                    }
+                },
+                {
+                    id: 7,
+                    name: 'Étoile Filante',
+                    brand: 'Louis Vuitton',
+                    price: 25000,
+                    imageUrl: 'https://images.unsplash.com/photo-1605650528254-4a6c0f0a8a6f?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=800&q=80',
+                    gallery: [
+                        'https://images.unsplash.com/photo-1605650528254-4a6c0f0a8a6f?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=800&q=80'
+                    ],
+                    category: 'female',
+                    isSale: false,
+                    size: '100 мл',
+                    description: 'Искрящийся и радостный аромат, построенный вокруг ноты османтуса. Дарит ощущение счастья и света.',
+                    notes: {
+                        top: 'Клубника, Персик',
+                        heart: 'Османтус, Жасмин',
+                        base: 'Белый мускус'
+                    }
+                },
+                {
+                    id: 8,
+                    name: 'Silent Whisper',
+                    brand: 'Byredo',
+                    price: 18000,
+                    imageUrl: 'https://images.unsplash.com/photo-1622618951911-4b10298d1e3d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=800&q=80',
+                    gallery: [
+                        'https://images.unsplash.com/photo-1622618951911-4b10298d1e3d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=800&q=80'
+                    ],
+                    category: 'unisex',
+                    isSale: false,
+                    size: '50 мл',
+                    description: 'Чистый, минималистичный и интимный аромат. Словно вторая кожа, он мягко обволакивает нотами мускуса и амбретты.',
+                    notes: {
+                        top: 'Амбретта',
+                        heart: 'Фиалка, Магнолия',
+                        base: 'Мускус, Сандал'
+                    }
+                },
+            ];
+
+            // ===== Состояние корзины =====
+            let cart = []; // Массив объектов { id, name, brand, price, imageUrl, quantity }
+
+            // ===== [НОВОЕ] Состояние фильтров =====
+            let activeCategory = 'all';
+
+            // ===== Элементы DOM =====
+            const productGrid = document.getElementById('productGrid');
+            // ... (остальные элементы DOM) ...
+            const cartTotal = document.getElementById('cartTotal');
+            const emptyCartMessage = document.getElementById('emptyCartMessage');
+            const body = document.body;
+            const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+            const mobileMenu = document.getElementById('mobileMenu');
+
+            <!-- [ИСПРАВЛЕНО] Элементы DOM для AI Модального окна восстановлены -->
+            const aiModal = document.getElementById('aiModal');
+            const aiOverlay = document.getElementById('aiOverlay');
+            const aiPanel = document.getElementById('aiPanel');
+            const closeAiBtn = document.getElementById('closeAiBtn');
+            const aiModalTitle = document.getElementById('aiModalTitle');
+            const aiLoading = document.getElementById('aiLoading');
+            const aiDescriptionContent = document.getElementById('aiDescriptionContent');
+
+            // [НОВОЕ] Элементы DOM для Поиска и Сортировки
+            const searchInput = document.getElementById('searchInput');
+            const sortSelect = document.getElementById('sortSelect');
+            
+            // [НОВОЕ] Элементы DOM для секции Скидок и Категорий
+            const saleSectionGrid = document.querySelector('#sale-section .flex');
+            const categoryFilters = document.getElementById('categoryFilters');
+
+            // [НОВОЕ] Элементы DOM для "Быстрого просмотра"
+            const quickViewModal = document.getElementById('quickViewModal');
+            const quickViewOverlay = document.getElementById('quickViewOverlay');
+            const quickViewPanel = document.getElementById('quickViewPanel');
+            const closeQuickViewBtn = document.getElementById('closeQuickViewBtn');
+            const quickViewImage = document.getElementById('quickViewImage');
+            const quickViewGallery = document.getElementById('quickViewGallery');
+            const quickViewName = document.getElementById('quickViewName');
+            const quickViewBrand = document.getElementById('quickViewBrand');
+            const quickViewPrice = document.getElementById('quickViewPrice');
+            const quickViewSize = document.getElementById('quickViewSize');
+            const quickViewDescription = document.getElementById('quickViewDescription');
+            const quickViewNotesContainer = document.getElementById('quickViewNotesContainer');
+            const quickViewNotesTop = document.getElementById('quickViewNotesTop');
+            const quickViewNotesHeart = document.getElementById('quickViewNotesHeart');
+            const quickViewNotesBase = document.getElementById('quickViewNotesBase');
+            const quickViewAddToCartBtn = document.getElementById('quickViewAddToCartBtn');
+
+
+            // ===== Функции =====
+
+            /**
+             * Форматирует цену в рубли
+             */
+            function formatPrice(price) {
+                return new Intl.NumberFormat('ru-RU', { style: 'currency', currency: 'RUB', minimumFractionDigits: 0 }).format(price);
+            }
+
+            /**
+             * [НОВОЕ] Отрисовка карточек товаров со скидкой
+             */
+            function renderSaleProducts() {
+                saleSectionGrid.innerHTML = ''; // Очищаем
+                const saleProducts = products.filter(p => p.isSale);
+
+                if (saleProducts.length === 0) {
+                    saleSectionGrid.innerHTML = '<p class="text-gray-500 text-sm">Сейчас нет специальных предложений.</p>';
+                    return;
+                }
+
+                saleProducts.forEach(product => {
+                    const card = document.createElement('div');
+                    // [НОВОЕ] w-72 для горизонтального скролла
+                    card.className = 'flex-shrink-0 w-72 bg-white rounded-lg shadow-md overflow-hidden transition-all duration-300 hover:shadow-xl group border border-gray-100';
+                    card.innerHTML = `
+                        <div class="relative w-full h-56 overflow-hidden">
+                            <img src="${product.imageUrl}" alt="${product.name}" class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110" onerror="this.src='https://placehold.co/400x400/f0f4f8/7c3aed?text=Aura'; this.onerror=null;">
+                            
+                            <!-- [ИЗМЕНЕНО] Иконки действий -->
+                            <div class="absolute top-3 right-3 flex flex-col space-y-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                                <!-- Кнопка Быстрого просмотра -->
+                                <button data-id="${product.id}" class="open-quick-view-btn p-2 bg-white rounded-full shadow-md text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 transition" title="Быстрый просмотр">
+                                    <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                    </svg>
+                                </button>
+                                <!-- Кнопка AI-описания -->
+                                <button data-name="${product.name}" data-brand="${product.brand}" class="ai-description-btn p-2 bg-white rounded-full shadow-md text-indigo-500 hover:bg-indigo-50 hover:text-indigo-600 transition" title="✨ Узнать больше об аромате">
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-5 h-5">
+                                        <path fill-rule="evenodd" d="M10.868 2.884c-.321-.772-1.415-.772-1.736 0l-1.83 4.401-4.753.39-3.47 3.399c-.566.55-.262 1.54.513 1.693l4.832.742 2.11 4.377c.322.771 1.416.771 1.737 0l2.11-4.377 4.832-.742c.775-.153.08-1.143-.513-1.693l-3.47-3.399-4.753-.39-1.83-4.401Z" clip-rule="evenodd" />
+                                    </svg>
+                                </button>
+                            </div>
+
+                            <button data-id="${product.id}" class="add-to-cart-btn absolute bottom-4 left-1/2 -translate-x-1/2 translate-y-2 opacity-0 group-hover:opacity-100 group-hover:translate-y-0 bg-indigo-600 text-white text-sm font-medium py-2 px-4 rounded-full shadow-lg hover:bg-indigo-700 transition-all duration-300">
+                                Добавить в корзину
+                            </button>
+                            <span class="absolute top-3 left-3 bg-red-600 text-white text-xs font-bold py-1 px-3 rounded-full">СКИДКА</span>
+                        </div>
+                        <div class="p-4">
+                            <!-- [ИЗМЕНЕНО] Убрана кнопка AI отсюда -->
+                            <h3 class="text-base font-semibold text-gray-900 truncate pr-2">${product.name}</h3>
+                            <p class="text-sm text-gray-500 mb-2">${product.brand}</p>
+                            <div class="flex items-baseline space-x-2">
+                                <p class="text-lg font-bold text-red-600">${formatPrice(product.price)}</p>
+                                <p class="text-sm font-medium text-gray-400 line-through">${formatPrice(product.originalPrice)}</p>
+                            </div>
+                        </div>
+                    `;
+                    saleSectionGrid.appendChild(card);
+                });
+            }
+
+            /**
+             * Отрисовка карточек продуктов
+             * [ИЗМЕНЕНО] Принимает массив продуктов для отрисовки + добавлены бейджи "Скидка"
+             */
+            function renderProducts(productsToRender) {
+                productGrid.innerHTML = ''; // Очищаем сетку
+
+                // [НОВОЕ] Проверка на пустой результат
+                if (productsToRender.length === 0) {
+                    productGrid.innerHTML = `
+                        <div class="col-span-1 sm:col-span-2 md:col-span-3 lg:col-span-4 text-center py-12">
+                            <svg class="w-16 h-16 mx-auto text-gray-400" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+                            </svg>
+                            <h3 class="mt-2 text-lg font-medium text-gray-900">Ничего не найдено</h3>
+                            <p class="mt-1 text-sm text-gray-500">Попробуйте изменить ваш поисковый запрос или сбросить фильтры.</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                productsToRender.forEach(product => {
+                    const card = document.createElement('div');
+                    card.className = 'bg-white rounded-lg shadow-md overflow-hidden transition-all duration-300 hover:shadow-xl group border border-gray-100';
+                    
+                    // [ИЗМЕНЕНО] Динамическое добавление цены (со скидкой или без)
+                    const priceHtml = product.isSale ? `
+                        <div class="flex items-baseline space-x-2">
+                            <p class="text-lg font-bold text-red-600">${formatPrice(product.price)}</p>
+                            <p class="text-sm font-medium text-gray-400 line-through">${formatPrice(product.originalPrice)}</p>
+                        </div>
+                    ` : `
+                        <p class="text-lg font-bold text-indigo-600">${formatPrice(product.price)}</p>
+                    `;
+
+                    // [ИЗМЕНЕНО] Динамическое добавление бейджа "Скидка"
+                    const saleBadge = product.isSale ? `
+                        <span class="absolute top-4 left-4 bg-red-600 text-white text-xs font-bold py-1 px-3 rounded-full z-10">СКИДКА</span>
+                    ` : '';
+
+                    card.innerHTML = `
+                        <div class="relative w-full h-64 overflow-hidden">
+                            ${saleBadge}
+                            <img src="${product.imageUrl}" alt="${product.name}" class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110" onerror="this.src='https://placehold.co/400x400/f0f4f8/7c3aed?text=Aura'; this.onerror=null;">
+                            
+                            <!-- [НОВОЕ] Иконки действий -->
+                            <div class="absolute top-4 right-4 flex flex-col space-y-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10">
+                                <!-- Кнопка Быстрого просмотра -->
+                                <button data-id="${product.id}" class="open-quick-view-btn p-2 bg-white rounded-full shadow-md text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 transition" title="Быстрый просмотр">
+                                    <svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                    </svg>
+                                </button>
+                                <!-- Кнопка AI-описания -->
+                                <button data-name="${product.name}" data-brand="${product.brand}" class="ai-description-btn p-2 bg-white rounded-full shadow-md text-indigo-500 hover:bg-indigo-50 hover:text-indigo-600 transition" title="✨ Узнать больше об аромате">
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-5 h-5">
+                                        <path fill-rule="evenodd" d="M10.868 2.884c-.321-.772-1.415-.772-1.736 0l-1.83 4.401-4.753.39-3.47 3.399c-.566.55-.262 1.54.513 1.693l4.832.742 2.11 4.377c.322.771 1.416.771 1.737 0l2.11-4.377 4.832-.742c.775-.153.08-1.143-.513-1.693l-3.47-3.399-4.753-.39-1.83-4.401Z" clip-rule="evenodd" />
+                                    </svg>
+                                </button>
+                            </div>
+                            
+                            <button data-id="${product.id}" class="add-to-cart-btn absolute bottom-4 left-1/2 -translate-x-1/2 translate-y-2 opacity-0 group-hover:opacity-100 group-hover:translate-y-0 bg-indigo-600 text-white text-sm font-medium py-2 px-4 rounded-full shadow-lg hover:bg-indigo-700 transition-all duration-300 z-10">
+                                Добавить в корзину
+                            </button>
+                        </div>
+                        <div class="p-5">
+                            <!-- [ИЗМЕНЕНО] Убрана кнопка AI отсюда -->
+                            <h3 class="text-lg font-semibold text-gray-900 truncate pr-2">${product.name}</h3>
+                            <p class="text-sm text-gray-500 mb-2">${product.brand}</p>
+                            ${priceHtml}
+                        </div>
+                    `;
+                    productGrid.appendChild(card);
+                });
+            }
+
+            /**
+             * Открытие модального окна корзины
+             */
+            function openCart() {
+                cartModal.classList.remove('hidden');
+                body.classList.add('modal-open');
+                // Плавное появление
+                requestAnimationFrame(() => {
+                    cartOverlay.classList.remove('opacity-0');
+                    cartOverlay.classList.add('opacity-100');
+                    cartPanel.classList.remove('translate-x-full');
+                    cartPanel.classList.add('translate-x-0');
+                });
+                renderCartItems();
+            }
+
+            /**
+             * Закрытие модального окна корзины
+             */
+            function closeCart() {
+                // Плавное исчезновение
+                cartOverlay.classList.remove('opacity-100');
+                cartOverlay.classList.add('opacity-0');
+                cartPanel.classList.remove('translate-x-0');
+                cartPanel.classList.add('translate-x-full');
+                
+                // Скрываем модальное окно после анимации
+                setTimeout(() => {
+                    cartModal.classList.add('hidden');
+                    // [ИЗМЕНЕНО] Удаляем 'modal-open' только если AI и QuickView модальные окна тоже закрыты
+                    if (aiModal.classList.contains('hidden') && quickViewModal.classList.contains('hidden')) {
+                        body.classList.remove('modal-open');
+                    }
+                }, 300); // 300ms - длительность анимации
+            }
+
+            /**
+             * Добавление товара в корзину
+             */
+            function addToCart(productId) {
+                const product = products.find(p => p.id === productId);
+                if (!product) return;
+
+                const existingItem = cart.find(item => item.id === productId);
+
+                if (existingItem) {
+                    existingItem.quantity++;
+                } else {
+                    cart.push({ ...product, quantity: 1 });
+                }
+                
+                updateCartUI();
+                showAddedFeedback(event.target);
+            }
+
+            /**
+             * Визуальный отклик при добавлении в корзину
+             */
+            function showAddedFeedback(button) {
+                const originalText = button.innerHTML;
+                button.innerHTML = `
+                    <svg class="w-5 h-5 inline-block" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                    </svg>
+                    Добавлено!
+                `;
+                button.classList.add('bg-green-600', 'hover:bg-green-700');
+                button.classList.remove('bg-indigo-600', 'hover:bg-indigo-700');
+                button.disabled = true;
+
+                setTimeout(() => {
+                    button.innerHTML = originalText;
+                    button.classList.remove('bg-green-600', 'hover:bg-green-700');
+                    button.classList.add('bg-indigo-600', 'hover:bg-indigo-700');
+                    button.disabled = false;
+                }, 1500);
+            }
+
+            /**
+             * Удаление товара из корзины
+             */
+            function removeFromCart(productId) {
+                cart = cart.filter(item => item.id !== productId);
+                updateCartUI();
+                renderCartItems(); // Перерисовываем корзину
+            }
+
+            /**
+             * Обновление значка корзины и общего UI
+             */
+            function updateCartUI() {
+                const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
+                
+                if (totalItems > 0) {
+                    cartBadge.textContent = totalItems;
+                    cartBadge.classList.remove('hidden');
+                } else {
+                    cartBadge.classList.add('hidden');
+                }
+            }
+
+            /**
+             * Отрисовка товаров в модальном окне корзины
+             */
+            function renderCartItems() {
+                cartItemsList.innerHTML = ''; // Очищаем список
+                
+                if (cart.length === 0) {
+                    emptyCartMessage.classList.remove('hidden');
+                } else {
+                    emptyCartMessage.classList.add('hidden');
+                    cart.forEach(item => {
+                        const li = document.createElement('li');
+                        li.className = 'flex py-6';
+                        li.innerHTML = `
+                            <div class="h-24 w-24 flex-shrink-0 overflow-hidden rounded-md border border-gray-200">
+                                <img src="${item.imageUrl}" alt="${item.name}" class="h-full w-full object-cover object-center">
+                            </div>
+                            <div class="ml-4 flex flex-1 flex-col">
+                                <div>
+                                    <div class="flex justify-between text-base font-medium text-gray-900">
+                                        <h3>${item.name}</h3>
+                                        <p class="ml-4">${formatPrice(item.price * item.quantity)}</p>
+                                    </div>
+                                    <p class="mt-1 text-sm text-gray-500">${item.brand}</p>
+                                </div>
+                                <div class="flex flex-1 items-end justify-between text-sm">
+                                    <p class="text-gray-500">Кол-во: ${item.quantity}</p>
+                                    <div class="flex">
+                                        <button data-id="${item.id}" type="button" class="remove-from-cart-btn font-medium text-indigo-600 hover:text-indigo-500">
+                                            Удалить
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                        cartItemsList.appendChild(li);
+                    });
+                }
+                
+                // Обновляем общую сумму
+                const total = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+                cartTotal.textContent = formatPrice(total);
+            }
+
+
+            <!-- [ИСПРАВЛЕНО] Функции для AI-описания восстановлены -->
+            <!-- ===== [НОВЫЕ] Функции для AI-описания ===== -->
+
+            /**
+             * [НОВОЕ] Безопасный вызов fetch с повторными попытками (Exponential Backoff)
+             * [ИСПРАВЛЕНО] Восстановлена полная и корректная версия функции.
+             */
+            async function fetchWithRetry(url, options, retries = 3, delay = 1000) {
+                for (let i = 0; i < retries; i++) {
+                    try {
+                        const response = await fetch(url, options);
+                        if (!response.ok) {
+                            // Не повторяем при "плохих" запросах (4xx), только при ошибках сервера (5xx)
+                            if (response.status >= 400 && response.status < 500) {
+                                throw new Error(`Ошибка клиента: ${response.status}`);
+                            }
+                            // Повтор при ошибках сервера
+                            throw new Error(`Ошибка сервера: ${response.status}`);
+                        }
+                        return response; // Успешный ответ
+                    } catch (error) {
+                        console.warn(`Fetch attempt ${i + 1} failed: ${error.message}`);
+                        if (i === retries - 1) {
+                            // Если это последняя попытка, пробрасываем ошибку
+                            throw error;
+                        }
+                        // Экспоненциальная задержка
+                        await new Promise(res => setTimeout(res, delay * Math.pow(2, i)));
+                    }
+                }
+                // Если все попытки не удались
+                throw new Error('Не удалось выполнить запрос после нескольких попыток');
+            }
+
+            /**
+             * [НОВОЕ] Открытие модального окна ИИ (ВОССТАНОВЛЕНО)
+             */
+            async function openAiModal(name, brand) {
+                aiModal.classList.remove('hidden');
+                body.classList.add('modal-open');
+                
+                // Сбрасываем состояние
+                aiModalTitle.textContent = `Об аромате: ${name}`;
+                aiDescriptionContent.innerHTML = '';
+                aiLoading.classList.remove('hidden');
+                
+                // Плавное появление
+                requestAnimationFrame(() => {
+                    aiOverlay.classList.add('opacity-100');
+                    aiPanel.classList.remove('translate-y-full', 'scale-95', 'opacity-0');
+                    aiPanel.classList.add('translate-y-0', 'scale-100', 'opacity-100');
+                });
+
+                try {
+                    const description = await callGeminiAPI(name, brand);
+                    // Форматируем простой Markdown (заменяем \n на <p>)
+                    const formattedDescription = description
+                        .split('\n')
+                        .filter(p => p.trim() !== '')
+                        .map(p => `<p class="mb-3">${p}</p>`)
+                        .join('');
+                    aiDescriptionContent.innerHTML = formattedDescription;
+                } catch (error) {
+                    console.error('Ошибка Gemini API:', error);
+                    aiDescriptionContent.innerHTML = '<p class="text-red-500">Не удалось загрузить описание. Пожалуйста, попробуйте еще раз позже.</p>';
+                } finally {
+                    aiLoading.classList.add('hidden');
+                }
+            }
+
+            /**
+             * [НОВОЕ] Закрытие модального окна ИИ (ВОССТАНОВЛЕНО)
+             */
+            function closeAiModal() {
+                // Плавное исчезновение
+                aiOverlay.classList.remove('opacity-100');
+                aiOverlay.classList.add('opacity-0');
+                aiPanel.classList.add('translate-y-full', 'scale-95', 'opacity-0');
+                aiPanel.classList.remove('translate-y-0', 'scale-100', 'opacity-100');
+                
+                // Скрываем модальное окно после анимации
+                setTimeout(() => {
+                    aiModal.classList.add('hidden');
+                    // [ИЗМЕНЕНО] Удаляем 'modal-open' только если корзина и QuickView тоже закрыты
+                    if (cartModal.classList.contains('hidden') && quickViewModal.classList.contains('hidden')) {
+                        body.classList.remove('modal-open');
+                    }
+                }, 300); // 300ms - длительность анимации
+            }
+
+            /**
+             * [НОВОЕ] Вызов Gemini API (ВОССТАНОВЛЕНО)
+             */
+            async function callGeminiAPI(name, brand) {
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+                
+                const systemPrompt = "Ты — элитный парфюмерный сомелье. Твоя задача — дать краткое, но яркое и поэтическое описание аромата. Избегай маркетинговых клише. Опиши характер, атмосферу и кому он подойдет. Отвечай на русском языке.";
+                const userQuery = `Опиши аромат "${name}" от бренда "${brand}".`;
+
+                const payload = {
+                    contents: [{ parts: [{ text: userQuery }] }],
+                    systemInstruction: {
+                        parts: [{ text: systemPrompt }]
+                    },
+                };
+
+                const response = await fetchWithRetry(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                const result = await response.json();
+                
+                const candidate = result.candidates?.[0];
+                if (candidate && candidate.content?.parts?.[0]?.text) {
+                    return candidate.content.parts[0].text;
+                } else {
+                    console.error("Ошибка ответа API:", result);
+                    throw new Error('Не удалось получить описание от Gemini.');
+                }
+            }
+
+
+            // ===== [НОВЫЕ] Функции для "Быстрого просмотра" =====
+
+            /**
+             * [НОВОЕ] Открытие модального окна "Быстрого просмотра"
+             */
+            function openQuickView(productId) {
+                const product = products.find(p => p.id === productId);
+                if (!product) return;
+
+                // Заполняем данными
+                quickViewName.textContent = product.name;
+                quickViewBrand.textContent = product.brand;
+                quickViewPrice.textContent = product.isSale ? formatPrice(product.price) : formatPrice(product.price);
+                // [ДОБАВЛЕНО] Обработка цены со скидкой (хотя в макете она одна)
+                quickViewSize.textContent = product.size;
+                quickViewDescription.innerHTML = `<p>${product.description}</p>`;
+                quickViewAddToCartBtn.dataset.id = product.id; // Устанавливаем ID для кнопки
+                
+                // Главное изображение
+                quickViewImage.src = product.gallery[0];
+                quickViewImage.alt = product.name;
+
+                // Галерея
+                quickViewGallery.innerHTML = ''; // Очищаем
+                product.gallery.forEach((imgUrl, index) => {
+                    const img = document.createElement('img');
+                    img.src = imgUrl;
+                    img.alt = `${product.name} (фото ${index + 1})`;
+                    img.className = `quick-view-gallery-item w-16 h-16 object-cover rounded-md border-2 ${index === 0 ? 'active' : ''}`;
+                    img.dataset.src = imgUrl;
+                    quickViewGallery.appendChild(img);
+                });
+
+                // Ноты
+                if (product.notes) {
+                    quickViewNotesTop.textContent = product.notes.top;
+                    quickViewNotesHeart.textContent = product.notes.heart;
+                    quickViewNotesBase.textContent = product.notes.base;
+                    quickViewNotesContainer.classList.remove('hidden');
+                } else {
+                    quickViewNotesContainer.classList.add('hidden');
+                }
+
+                // Открываем модальное окно
+                quickViewModal.classList.remove('hidden');
+                body.classList.add('modal-open');
+                
+                // Плавное появление
+                requestAnimationFrame(() => {
+                    quickViewOverlay.classList.add('opacity-100');
+                    quickViewPanel.classList.remove('translate-y-full', 'scale-95', 'opacity-0');
+                    quickViewPanel.classList.add('translate-y-0', 'scale-100', 'opacity-100');
+                });
+            }
+
+            /**
+             * [НОВОЕ] Закрытие модального окна "Быстрого просмотра"
+             */
+            function closeQuickView() {
+                // Плавное исчезновение
+                quickViewOverlay.classList.remove('opacity-100');
+                quickViewOverlay.classList.add('opacity-0');
+                quickViewPanel.classList.add('translate-y-full', 'scale-95', 'opacity-0');
+                quickViewPanel.classList.remove('translate-y-0', 'scale-100', 'opacity-100');
+                
+                // Скрываем модальное окно после анимации
+                setTimeout(() => {
+                    quickViewModal.classList.add('hidden');
+                    // [ИЗМЕНЕНО] Удаляем 'modal-open' только если корзина и AI-модальное окно тоже закрыты
+                    if (cartModal.classList.contains('hidden') && aiModal.classList.contains('hidden')) {
+                        body.classList.remove('modal-open');
+                    }
+                }, 300); // 300ms - длительность анимации
+            }
+
+            /**
+             * [НОВОЕ] Обработчик клика по миниатюре в галерее
+             */
+            quickViewGallery.addEventListener('click', (e) => {
+                const targetImg = e.target.closest('.quick-view-gallery-item');
+                if (!targetImg) return;
+
+                // Устанавливаем новое главное изображение
+                quickViewImage.src = targetImg.dataset.src;
+
+                // Обновляем 'active' класс
+                quickViewGallery.querySelectorAll('.quick-view-gallery-item').forEach(img => {
+                    img.classList.remove('active');
+                });
+                targetImg.classList.add('active');
+            });
+
+
+            // ===== [НОВАЯ] Функция для Фильтрации и Сортировки =====
+
+            /**
+             * [НОВОЕ] Отрисовка отфильтрованных и отсортированных продуктов
+             * [ИЗМЕНЕНО] Добавлена фильтрация по категории
+             */
+            function renderFilteredProducts() {
+                const searchTerm = searchInput.value.toLowerCase();
+                const sortOption = sortSelect.value;
+                // activeCategory - глобальная переменная
+
+                let filteredProducts = [...products];
+
+                // 1. Фильтрация по Категории
+                if (activeCategory !== 'all') {
+                    filteredProducts = filteredProducts.filter(p => p.category === activeCategory);
+                }
+
+                // 2. Фильтрация (Поиск)
+                if (searchTerm) {
+                    filteredProducts = filteredProducts.filter(p => 
+                        p.name.toLowerCase().includes(searchTerm) || 
+                        p.brand.toLowerCase().includes(searchTerm)
+                    );
+                }
+
+                // 3. Сортировка
+                switch (sortOption) {
+                    case 'price_asc':
+                        filteredProducts.sort((a, b) => a.price - b.price);
+                        break;
+                    case 'price_desc':
+                        filteredProducts.sort((a, b) => b.price - a.price);
+                        break;
+                    case 'name_asc':
+                        filteredProducts.sort((a, b) => a.name.localeCompare(b.name));
+                        break;
+                    // 'default' не делает ничего, сохраняя отфильтрованный порядок
+                }
+
+                // 4. Отрисовка
+                renderProducts(filteredProducts);
+            }
+
+
+            // ===== Назначение обработчиков событий =====
+
+            // [НОВОЕ] Рендерим секцию скидок
+            renderSaleProducts();
+            
+            // [ИЗМЕНЕНО] Рендерим продукты с задержкой, чтобы показать скелет
+            setTimeout(() => {
+                renderFilteredProducts();
+            }, 500); // Имитация загрузки
+
+            // Открытие/закрытие корзины
+            openCartBtn.addEventListener('click', openCart);
+            closeCartBtn.addEventListener('click', closeCart);
+            cartOverlay.addEventListener('click', closeCart);
+            continueShoppingBtn.addEventListener('click', closeCart);
+
+            <!-- [ИСПРАВЛЕНО] Обработчики AI-модального окна восстановлены -->
+            closeAiBtn.addEventListener('click', closeAiModal);
+            aiOverlay.addEventListener('click', closeAiModal);
+
+            // [НОВОЕ] Открытие/закрытие "Быстрого просмотра"
+            closeQuickViewBtn.addEventListener('click', closeQuickView);
+            quickViewOverlay.addEventListener('click', closeQuickView);
+
+            // [НОВОЕ] Обработчики для Поиска и Сортировки
+            searchInput.addEventListener('input', renderFilteredProducts);
+            sortSelect.addEventListener('change', renderFilteredProducts);
+
+            // [НОВОЕ] Обработчик для Фильтров Категорий
+            categoryFilters.addEventListener('click', (e) => {
+                const targetButton = e.target.closest('.category-btn');
+                if (!targetButton) return;
+
+                // Снимаем 'active' со всех кнопок
+                categoryFilters.querySelectorAll('.category-btn').forEach(btn => {
+                    btn.classList.remove('active');
+                });
+                
+                // Добавляем 'active' нажатой кнопке
+                targetButton.classList.add('active');
+                
+                // Обновляем состояние
+                activeCategory = targetButton.dataset.category;
+                
+                // Перерисовываем продукты
+                renderFilteredProducts();
+            });
+
+            // Открытие/закрытие мобильного меню
+            mobileMenuBtn.addEventListener('click', (e) => {
+                e.currentTarget.setAttribute('aria-expanded', !mobileMenu.classList.contains('hidden'));
+                const isHidden = mobileMenu.classList.contains('hidden');
+                mobileMenu.classList.toggle('hidden');
+                
+                // Меняем иконку (бургер/крестик)
+                if (isHidden) {
+                    mobileMenuBtn.innerHTML = `
+                        <span class="sr-only">Закрыть меню</span>
+                        <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    `;
+                } else {
+                    mobileMenuBtn.innerHTML = `
+                        <span class="sr-only">Открыть меню</span>
+                        <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+                        </svg>
+                    `;
+                }
+            });
+
+            // Обработка нажатия клавиши Esc для закрытия
+            window.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape' && !cartModal.classList.contains('hidden')) {
+                    closeCart();
+                }
+                <!-- [ИСПРАВЛЕНО] Обработчик Esc для AI-модального окна восстановлен -->
+                if (e.key === 'Escape' && !aiModal.classList.contains('hidden')) {
+                    closeAiModal();
+                }
+                // [НОВОЕ] Закрытие QuickView по Esc
+                if (e.key === 'Escape' && !quickViewModal.classList.contains('hidden')) {
+                    closeQuickView();
+                }
+            });
+
+            // Добавление в корзину (через делегирование событий)
+            // [ИЗМЕНЕНО] Теперь слушает и секцию скидок, и "Быстрый просмотр"
+            document.getElementById('app').addEventListener('click', (e) => {
+                const addToCartBtn = e.target.closest('.add-to-cart-btn');
+                const aiBtn = e.target.closest('.ai-description-btn');
+                const quickViewBtn = e.target.closest('.open-quick-view-btn'); // [НОВОЕ]
+
+                if (addToCartBtn) {
+                    const id = parseInt(addToCartBtn.dataset.id);
+                    addToCart(id);
+                    showAddedFeedback(addToCartBtn); // [ИЗМЕНЕНО] Передаем кнопку для обратной связи
+                    return;
+                }
+
+                if (aiBtn) {
+                    const name = aiBtn.dataset.name;
+                    const brand = aiBtn.dataset.brand;
+                    openAiModal(name, brand);
+                    return;
+                }
+
+                if (quickViewBtn) { // [НОВОЕ]
+                    const id = parseInt(quickViewBtn.dataset.id);
+                    openQuickView(id);
+                    return;
+                }
+            });
+
+            // Удаление из корзины (через делегирование событий)
+            cartItemsList.addEventListener('click', (e) => {
+                if (e.target.classList.contains('remove-from-cart-btn')) {
+                    const id = parseInt(e.target.dataset.id);
+                    removeFromCart(id);
+                }
+            });
+
+        });
+    </script>
+</body>
+</html>
+
+
+
+
